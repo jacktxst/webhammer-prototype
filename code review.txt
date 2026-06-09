@@ -1,0 +1,32 @@
+create_block.js
+
+	pretty ok, only fixes i can see are
+
+		- replace X Y Z with "x" "y" "z"
+		- dont make new material for every box
+		- dont create new_box geometry every time. dispose of the geometry when necessary
+		- in fact the whole new_box geometry can just be defined as a constant part of the tool object
+
+cuboid_selection.js
+
+	update handle positions should start with underscore
+	same issue with X, Y, Z
+
+	the handles can share materials and geometry
+
+	needs to be looked at again. its long
+
+select_brush
+
+	has some weird commented out code
+	definitely revise
+
+destroy_brush
+
+	tiny. it works. good.
+
+orbit_camera 
+
+	i think that the camera should work a bit differently. like maybe this should be the pan tool .
+
+

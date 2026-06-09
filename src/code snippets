@@ -1,0 +1,52 @@
+// random stuff i made, obsolete now. collision only works for unrotated box geometry. kinda cool and elegant though.
+
+collide(point) {
+    return false;
+    if (point.y <= 0.5) return true;
+    for (let box of this.world.children) {
+        let s = new THREE.Vector3(
+            Math.abs(box.scale.x),
+            Math.abs(box.scale.y),
+            Math.abs(box.scale.z)
+        );
+        let min = new THREE.Vector3(
+            box.position.x-(s.x+0.5)/2,
+            box.position.y-(s.y+1. )/2,
+            box.position.z-(s.z+0.5)/2,
+        );
+        let max = new THREE.Vector3(
+            box.position.x+(s.x+0.5)/2,
+            box.position.y+(s.y+1. )/2,
+            box.position.z+(s.z+0.5)/2,
+        );
+        if (
+            (min.x <= point.x && point.x <= max.x) &&
+            (min.y <= point.y && point.y <= max.y) &&
+            (min.z <= point.z && point.z <= max.z)
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+move_and_collide(dt) {
+    let prospect = this.camera.position.clone();
+    prospect.x += this.wish_vec[X] * this.fly_speed * dt;
+    if (this.collide(prospect)) {
+        prospect.x -= this.wish_vec[X] * this.fly_speed * dt;
+    }
+
+    prospect.y += this.velocity[Y] * dt;
+    if (this.collide(prospect)) {
+        prospect.y -= this.velocity[Y] * dt;
+        this.velocity[Y] = 0;
+        this.on_ground = true;
+    } else this.on_ground = false;
+
+    prospect.z += this.wish_vec[Y] * this.fly_speed * dt;
+    if (this.collide(prospect)) {
+        prospect.z -= this.wish_vec[Y] * this.fly_speed * dt;
+    }
+    this.camera.position.copy(prospect);
+}

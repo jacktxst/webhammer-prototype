@@ -1,0 +1,31 @@
+{
+  "hash": "fe7fda2b",
+  "configHash": "694549ca",
+  "lockfileHash": "7cca0bbc",
+  "browserHash": "03dc3a7c",
+  "optimized": {
+    "vue": {
+      "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
+      "file": "vue.js",
+      "fileHash": "b12531c7",
+      "needsInterop": false
+    },
+    "three": {
+      "src": "../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "5383c581",
+      "needsInterop": false
+    },
+    "three/addons/controls/OrbitControls.js": {
+      "src": "../../node_modules/three/examples/jsm/controls/OrbitControls.js",
+      "file": "three_addons_controls_OrbitControls__js.js",
+      "fileHash": "62bd29d0",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-MHAWYP2O": {
+      "file": "chunk-MHAWYP2O.js"
+    }
+  }
+}
