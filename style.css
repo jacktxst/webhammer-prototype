@@ -92,3 +92,27 @@ button:active {
     touch-action: none;
     z-index:11;
 }
+
+/* scrollbars: black background, white accent */
+* {
+    scrollbar-color: white black;   /* firefox: thumb track */
+    scrollbar-width: thin;
+}
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+*::-webkit-scrollbar-track {
+    background: black;
+}
+*::-webkit-scrollbar-thumb {
+    background: white;
+    border: 2px solid black;        /* black inset around the thumb */
+    border-radius: 0;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: #ccc;
+}
+*::-webkit-scrollbar-corner {
+    background: black;
+}

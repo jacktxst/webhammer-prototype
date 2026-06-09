@@ -56,8 +56,24 @@ class BrushPlane {
     // points is a list of 2 Vector3 points
     // this function returns a plane { normal, distance }
     // that represents the cutting plane defined by the given line segment
+    //
+    // the cutting plane contains the segment and is perpendicular to this
+    // BrushPlane, so cutting a brush by this plane slices straight down
+    // through the face the user drew on
     getKnifePlane( points ) {
+        const [a, b] = points;
+        const lineDir = b.clone().sub(a);
+        const normal = new THREE.Vector3()
+            .crossVectors(this.normal, lineDir)
+            .normalize();
+        const distance = normal.dot(a);
+        return { normal, distance };
+    }
 
+    // return a point projected onto the plane
+    projectPointToPlane( point ) {
+        const d = this.normal.dot(point) - this.distance;
+        return point.clone().addScaledVector(this.normal, -d);
     }
 
 }
@@ -134,28 +150,28 @@ export class PlaneBrush {
     // -------------------------
     // CSG knife split
     // -------------------------
-    knife(pnormal, pdistance) {
+    knife(pnormal, pdistance, material_id) {
         const n = pnormal.clone().normalize();
 
         const frontPlanes = this._clonePlanes();
-        frontPlanes.push({
+        frontPlanes.push(new BrushPlane({
             normal: n.clone(),
             distance: pdistance,
-            texture: null
-        });
+            material_id: material_id
+        }));
 
         const backPlanes = this._clonePlanes();
-        backPlanes.push({
+        backPlanes.push(new BrushPlane({
             normal: n.clone().negate(),
             distance: -pdistance,
-            texture: null
-        });
+            material_id: material_id
+        }));
 
-        const front = new PlaneBrush(new THREE.Vector3(), new THREE.Vector3(), null);
+        const front = new PlaneBrush(new THREE.Vector3(), new THREE.Vector3(1, 1, 1), 0);
         front._planes = frontPlanes;
         front._generateMesh();
 
-        const back = new PlaneBrush(new THREE.Vector3(), new THREE.Vector3(), null);
+        const back = new PlaneBrush(new THREE.Vector3(), new THREE.Vector3(1, 1, 1), 0);
         back._planes = backPlanes;
         back._generateMesh();
 
@@ -167,12 +183,15 @@ export class PlaneBrush {
     // -------------------------
     scale(vec) {
         for (const p of this._planes) {
-            const s =
-                Math.abs(p.normal.x * vec.x) +
-                Math.abs(p.normal.y * vec.y) +
-                Math.abs(p.normal.z * vec.z);
-
-            p.distance *= s;
+            // transform a plane { n, d } where n.P = d under axis scaling S = diag(vec):
+            //   new equation is (S^-T n) . P' = d
+            //   normalize so new_n stays unit length
+            const nx = p.normal.x / vec.x;
+            const ny = p.normal.y / vec.y;
+            const nz = p.normal.z / vec.z;
+            const L = Math.hypot(nx, ny, nz);
+            p.normal.set(nx / L, ny / L, nz / L);
+            p.distance = p.distance / L;
         }
         this._generateMesh();
     }
@@ -243,10 +262,10 @@ export class PlaneBrush {
 
         for (let i = 0; i < this._planes.length; i++) {
 
-            materials.push( core.materials[ this._planes[i].material_id ] )
-
             const face = this._buildFace(i);
             if (!face || face.length < 3) continue;
+
+            materials.push( core.materials[ this._planes[i].material_id ] )
 
             const normal = this._planes[i].normal;
 
@@ -406,10 +425,13 @@ export class PlaneBrush {
     }
 
     _clonePlanes() {
-        return this._planes.map(p => ({
+        return this._planes.map(p => new BrushPlane({
             normal: p.normal.clone(),
             distance: p.distance,
-            texture: p.texture
+            material_id: p.material_id,
+            uv_scale: p.uv_scale.clone(),
+            uv_offset: p.uv_offset.clone(),
+            uv_rotation: p.uv_rotation
         }));
     }
 }

@@ -1,11 +1,13 @@
 <template>
     <input
         type="text"
+        inputmode="decimal"
         v-model="editValue"
+        @beforeinput="filter_input"
         @keydown.enter="commit"
         @blur="cancel"
-        style="width: 25px; background-color: black; color: white;"
-
+        class="value-modifier"
+        :style="{ width: width + 'px' }"
     />
 </template>
 
@@ -32,6 +34,11 @@ export default {
         max: {
             type: Number,
             default: Infinity
+        },
+
+        width: {
+            type: Number,
+            default: 25
         }
     },
 
@@ -42,7 +49,12 @@ export default {
     },
 
     watch: {
-        'target[target_key]'() {
+        // refresh editValue when our props change identity
+        // (e.g. InspectPanel switching to a different brush's plane)
+        target() {
+            this.editValue = String(this.target[this.target_key]);
+        },
+        target_key() {
             this.editValue = String(this.target[this.target_key]);
         }
     },
@@ -50,6 +62,21 @@ export default {
     emits: ['on_change'],
 
     methods: {
+        // reject keystrokes / pastes that would make the field non-numeric.
+        // we allow "in-progress" forms like "", "-", ".", "-.", "1.", etc.
+        // so the user can type fluently; commit() does the final validation.
+        filter_input(e) {
+            // deletes / cuts / format changes have null data — let them through
+            if (e.data == null) return;
+            const input = e.target;
+            const start = input.selectionStart ?? input.value.length;
+            const end   = input.selectionEnd   ?? input.value.length;
+            const next = input.value.slice(0, start) + e.data + input.value.slice(end);
+            if (!/^-?\d*\.?\d*$/.test(next)) {
+                e.preventDefault();
+            }
+        },
+
         commit() {
             let value = Number(this.editValue);
 
@@ -71,3 +98,19 @@ export default {
     }
 };
 </script>
+
+<style scoped>
+.value-modifier {
+    background-color: black;
+    color: white;
+    border: 1px solid #444;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 1px 3px;
+    box-sizing: content-box;
+}
+.value-modifier:focus {
+    outline: none;
+    border-color: white;
+}
+</style>

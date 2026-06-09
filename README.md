@@ -13,3 +13,7 @@ key highlights of webhammer's current capabilities:
 
 future plans include (but are not limited to)
 
+technologies used:
+
+ - Vue JS
+ - THREE JS

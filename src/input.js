@@ -81,6 +81,26 @@ export default {
             down:(e)=>{core.grid.grow_cells()},
             up:(e)=>{}
         },
+
+        ArrowLeft:{
+            down:(e)=>{core.look_vel.y += 1},
+            up:(e)=>{core.look_vel.y -= 1}
+        },
+
+        ArrowRight:{
+            down:(e)=>{core.look_vel.y -= 1},
+            up:(e)=>{core.look_vel.y += 1}
+        },
+
+        ArrowUp:{
+            down:(e)=>{core.look_vel.x += 1},
+            up:(e)=>{core.look_vel.x -= 1}
+        },
+
+        ArrowDown:{
+            down:(e)=>{core.look_vel.x -= 1},
+            up:(e)=>{core.look_vel.x += 1}
+        }
     },
 
     init() {

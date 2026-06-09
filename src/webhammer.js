@@ -49,16 +49,21 @@ what's majorly missing?
 
 WHAT DO I DO NEXT?
 
-    arrow keys look
+    
 
-    add knife tool
-    fix valuemodifier bugs
     give the ui some love
+
+        - selected brush should show the brush highlighted and the brush outline
+        - selection box outline should be visible
+        - test on mobile
+
+
+    making brushes off of other brushes
 
 ideas for the FUTURE
 
-- knife tool
 - tool settings menu
+- saving layouts
 - edit action before commit, enter precise parameters
 - rotate brush
 - translate brush
@@ -81,6 +86,8 @@ import orbit_camera_tool from './editor_tools/orbit_camera.js';
 import select_brush_tool from './editor_tools/select_brush.js';
 import paint_face_tool from './editor_tools/paint_face.js';
 import paint_block_tool from './editor_tools/paint_block.js';
+import knife_tool from './editor_tools/knife.js';
+
 
 
 import grid  from './grid_helper.js'
@@ -94,7 +101,11 @@ const X = 0;
 const Y = 1;
 const Z = 2;
 
+
+
 export default {
+
+
 
     init(canvas) {
         this.textures = [],
@@ -105,8 +116,9 @@ export default {
 
         this.velocity = [0,0,0]
         this.input_vec = [0,0]
+        this.look_vel = new THREE.Vector2()
         this.wish_vec = [0,0]
-        this.fly_speed = 2
+        this.fly_speed = 4
 
         this.tool = null
         this.tools = { 
@@ -116,7 +128,8 @@ export default {
             orbit_camera: orbit_camera_tool,
             select_brush: select_brush_tool,
             paint_block: paint_block_tool,
-            paint_face: paint_face_tool
+            paint_face: paint_face_tool,
+            knife: knife_tool
         },
         this.grid = grid
         this.input = input
@@ -148,11 +161,15 @@ export default {
         this.renderer.setAnimationLoop(this.loop);
     },
 
+
+
     update_movement() {
         this.input_vec[0] = clamp(this.input_vec[0], -1, 1);
         this.input_vec[1] = clamp(this.input_vec[1], -1, 1);
         this.wish_vec = get_wish_vec(this.input_vec, this.camera.rotation.y);
     },
+
+
 
     loop() {
         const dt = this.clock.getDelta();
@@ -161,8 +178,15 @@ export default {
         this.camera.position.y += this.velocity[Y] * this.fly_speed * dt;
         this.camera.position.z += this.wish_vec[Y] * this.fly_speed * dt;
 
+        this.camera.rotation.y += this.look_vel.y * 1.5 * dt;
+        this.camera.rotation.x += this.look_vel.x * 1.5 * dt;
+        this.look_vel.y = clamp(this.look_vel.y, -1, 1)
+        this.look_vel.x = clamp(this.look_vel.x, -1, 1) 
+
         this.renderer.render(this.scene, this.camera);
     },
+
+
 
     /* prompt the user to open a level file and parse it */
     async load_level() {
@@ -241,6 +265,9 @@ export default {
             }
         };
     },
+
+
+
     /* bundle the level into a zip file and trigger a download */
     async save_level() {
         const zip = new JSZip();
@@ -277,6 +304,9 @@ export default {
         a.click();
         URL.revokeObjectURL(url);
     },
+
+
+
     /* create and register a texture with the given image */
     create_texture(bitmap) {
         const texture = new THREE.Texture(bitmap);
@@ -287,6 +317,9 @@ export default {
         texture.needsUpdate = true;
         this.textures.push({ texture: texture, bitmap : bitmap  });
     },
+
+
+
     /* prompt the user to open an image file */
     import_texture() {
         const input = document.createElement('input');
