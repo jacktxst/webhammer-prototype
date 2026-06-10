@@ -118,6 +118,7 @@ export default {
 
     on_click_or_tap(e) {
         if(core.tool) core.tools[core.tool].on_start?.(e)
+        this.drag = true
     },
 
     on_resize() {
@@ -145,10 +146,20 @@ export default {
             core.update_movement();
         }
         if(core.tool) core.tools[core.tool].on_move?.(e);
+        else if (this.drag) {
+            core.v_persp.rotation.y -= e.movementX * this.look_sens;
+            core.v_persp.rotation.x -= e.movementY * this.look_sens;
+            core.v_ortho.rotation.y -= e.movementX * this.look_sens;
+            core.v_ortho.rotation.x -= e.movementY * this.look_sens;
+            core.v_persp.rotation.x = clamp(core.v_persp.rotation.x, -Math.PI / 2, Math.PI / 2);
+            core.v_ortho.rotation.x = clamp(core.v_ortho.rotation.x, -Math.PI / 2, Math.PI / 2);
+            core.update_movement();
+        }
     },
 
     on_click_or_tap_release(e) {
         if(core.tool) core.tools[core.tool].on_end?.(e);
+        this.drag = false
     },
 
     on_keydown(e) {
