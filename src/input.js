@@ -19,18 +19,18 @@ export default {
     keybinds : { // KeyX        :{down:(e)=>{},up:(e)=>{}},
 
         KeyX        :{
-            down:(e)=>{core.grid.setAxis(X)},
-            up:(e)=>{core.grid.default_plane()}
+            down:(e)=>{core.grid.set_axis(X)},
+            up:(e)=>{core.grid.set_to_default()}
         },
         
         KeyY        :{
-            down:(e)=>{core.grid.setAxis(Y)},
-            up:(e)=>{core.grid.default_plane()}
+            down:(e)=>{core.grid.set_axis(Y)},
+            up:(e)=>{core.grid.set_to_default()}
         },
 
         KeyZ        :{
-            down:(e)=>{core.grid.setAxis(Z)},
-            up:(e)=>{core.grid.default_plane()}
+            down:(e)=>{core.grid.set_axis(Z)},
+            up:(e)=>{core.grid.set_to_default()}
         },
 
         KeyW        :{
@@ -83,23 +83,23 @@ export default {
         },
 
         ArrowLeft:{
-            down:(e)=>{core.look_vel.y += 1},
-            up:(e)=>{core.look_vel.y -= 1}
+            down:(e)=>{core.look_vel.y += 1; core.look_vel.y = clamp(core.look_vel.y, -1, 1);},
+            up:(e)=>{core.look_vel.y -= 1; core.look_vel.y = clamp(core.look_vel.y, -1, 1);}
         },
 
         ArrowRight:{
-            down:(e)=>{core.look_vel.y -= 1},
-            up:(e)=>{core.look_vel.y += 1}
+            down:(e)=>{core.look_vel.y -= 1; core.look_vel.y = clamp(core.look_vel.y, -1, 1);},
+            up:(e)=>{core.look_vel.y += 1; core.look_vel.y = clamp(core.look_vel.y, -1, 1);}
         },
 
         ArrowUp:{
-            down:(e)=>{core.look_vel.x += 1},
-            up:(e)=>{core.look_vel.x -= 1}
+            down:(e)=>{core.look_vel.x += 1; core.look_vel.x = clamp(core.look_vel.x, -1, 1);},
+            up:(e)=>{core.look_vel.x -= 1; core.look_vel.x = clamp(core.look_vel.x, -1, 1);}
         },
 
         ArrowDown:{
-            down:(e)=>{core.look_vel.x -= 1},
-            up:(e)=>{core.look_vel.x += 1}
+            down:(e)=>{core.look_vel.x -= 1; core.look_vel.x = clamp(core.look_vel.x, -1, 1);},
+            up:(e)=>{core.look_vel.x += 1; core.look_vel.x = clamp(core.look_vel.x, -1, 1);}
         }
     },
 

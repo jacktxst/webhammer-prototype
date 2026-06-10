@@ -1,12 +1,13 @@
 <script>
 
 import DraggablePanel from "./DraggablePanel.vue";
+import TextureView from "./TextureView.vue";
 import * as THREE from "three";
 import core from "../webhammer.js";
 
 export default {
   name: "MaterialPanel",
-  components: { DraggablePanel },
+  components: { DraggablePanel, TextureView },
   data() {
     return { core }
   },
@@ -24,8 +25,31 @@ export default {
       const mat = new THREE.MeshBasicMaterial();
       mat.kx_texture = 0;
       if (this.core.textures[0]) mat.map = this.core.textures[0].texture;
+      // THREE.Material already has a .name field — give it a sensible default
+      mat.name = 'Material ' + this.core.materials.length;
       this.core.materials.push(mat);
       this.core.current_material = this.core.materials.length - 1;
+    },
+
+    // create one material per texture, each named after its texture and
+    // mapped to it. textures whose name already has a matching material
+    // are skipped so clicking twice doesn't pile up duplicates.
+    match_textures() {
+      const existing = new Set(this.core.materials.map(m => m.name));
+      let first_new = -1;
+      for (let i = 0; i < this.core.textures.length; i++) {
+        const entry = this.core.textures[i];
+        const name = entry.name ?? ('Material ' + this.core.materials.length);
+        if (existing.has(name)) continue;
+        const mat = new THREE.MeshBasicMaterial();
+        mat.kx_texture = i;
+        mat.map = entry.texture;
+        mat.name = name;
+        if (first_new === -1) first_new = this.core.materials.length;
+        this.core.materials.push(mat);
+        existing.add(name);
+      }
+      if (first_new >= 0) this.core.current_material = first_new;
     },
     remove_current() {
       if (this.core.materials.length === 0) return;
@@ -53,26 +77,40 @@ export default {
 
 <template>
 
-  <DraggablePanel title="Materials">
+  <DraggablePanel title="material">
 
-    <div class="cols">
+    <div class="panel-cols">
 
-      <div class="list">
+      <div class="panel-list">
         <div
           v-for="(mat, i) in core.materials"
           :key="i"
-          class="row"
+          class="panel-row"
           :class="{ selected: core.current_material === i }"
+          :title="i + ': ' + (mat.name || ('Material ' + i))"
           @click="select(i)"
         >
-          Material {{ i }}
+          <TextureView
+            v-if="core.textures[mat.kx_texture]"
+            class="panel-thumb"
+            :bitmap="core.textures[mat.kx_texture]"
+            :size="16"
+          />
+          <div v-else class="panel-thumb" style="width:16px;height:16px"></div>
+          <span class="panel-row-text">{{ i }}: {{ mat.name || ('Material ' + i) }}</span>
         </div>
         <button class="add-btn" @click="add_material">+ new</button>
+        <button class="add-btn" @click="match_textures" title="one material per texture">+ set</button>
       </div>
 
-      <div class="editor">
+      <div class="panel-editor">
         <template v-if="core.materials[core.current_material]">
-          <div class="label">Material {{ core.current_material }}</div>
+          <input
+            class="panel-name-input"
+            type="text"
+            v-model="core.materials[core.current_material].name"
+            :placeholder="'Material ' + core.current_material"
+          />
           <div class="tex-row">
             <button @click="bump_texture(-1)">-</button>
             <span>tex {{ core.materials[core.current_material].kx_texture ?? 0 }}</span>
@@ -80,7 +118,7 @@ export default {
           </div>
           <button class="delete-btn" @click="remove_current">delete</button>
         </template>
-        <div v-else class="empty">no material</div>
+        <div v-else class="panel-empty">no material</div>
       </div>
 
     </div>
@@ -93,55 +131,8 @@ export default {
 
 <style scoped>
 
-.cols {
-  display: flex;
-  flex-direction: row;
-  gap: 6px;
-  font-size: 11px;
-  align-items: stretch;
-}
-
-.list {
-  flex: 0 0 80px;
-  max-height: 130px;
-  overflow: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-right: 1px solid #aaa;
-  padding-right: 4px;
-}
-
-.row {
-  padding: 3px 4px;
-  cursor: pointer;
-  background: black;
-  color: white;
-  border: 1px solid #444;
-  white-space: nowrap;
-}
-
-.row.selected {
-  background: white;
-  color: black;
-  border-color: white;
-}
-
-.row:hover {
-  border-color: #aaa;
-}
-
-.editor {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.label {
-  font-weight: bold;
-}
+/* layout / row / editor / name-input / button compactness all live in style.css
+   under .panel-cols, .panel-list, .panel-row, .panel-editor, .panel-name-input */
 
 .tex-row {
   display: flex;
@@ -149,20 +140,6 @@ export default {
   gap: 4px;
 }
 
-.empty {
-  color: #888;
-  font-style: italic;
-}
-
-/* compact button overrides — global button is padding:10px margin:8px */
-.cols button {
-  padding: 2px 6px;
-  margin: 0;
-  font-size: 11px;
-}
-.cols button:hover {
-  outline: 1px solid white;
-}
 .add-btn {
   margin-top: 4px !important;
 }

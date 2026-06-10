@@ -19,7 +19,11 @@ export default {
 
 <template>
 
-  <DraggablePanel title="actions">
+  <DraggablePanel title="project">
+
+    <button @click="core.new_level()">
+      erase all
+    </button>
 
     <button @click="core.load_level()">
       load
@@ -29,8 +33,8 @@ export default {
       save
     </button>
 
-    <button @click="core.import_texture()">
-      import texture
+    <button @click="core.set_preview_skybox()">
+      set preview skybox
     </button>
 
     <button @click="core.input.keybinds.BracketLeft.down({})">
@@ -41,15 +45,15 @@ export default {
       grid +
     </button>
 
-    <button @click="core.grid.set_default(0)">
+    <button @click="core.grid.set_default_axis(0)">
       x grid
     </button>
 
-    <button @click="core.grid.set_default(1)">
+    <button @click="core.grid.set_default_axis(1)">
       y grid
     </button>
 
-    <button @click="core.grid.set_default(2)">
+    <button @click="core.grid.set_default_axis(2)">
       z grid
     </button>
 

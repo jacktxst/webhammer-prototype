@@ -22,12 +22,15 @@
 import * as THREE from 'three';
 import { raycast } from '../helpers.js'
 import core from '../webhammer.js';
+import icon from './icons/cuboid_selection.svg';
 
 const X = 0;
 const Y = 1;
 const Z = 2;
 
 export default {
+    icon,
+    description: "this tool doesn't really do anything useful yet.",
     selection_box: (() => {
         const mesh = new THREE.Mesh(
             new THREE.BoxGeometry(),

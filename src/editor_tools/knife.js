@@ -3,15 +3,17 @@
 import { raycast } from '../helpers.js'
 import * as THREE from 'three';
 import core from '../webhammer.js';
+import icon from './icons/knife.svg';
 
 export default {
 
+	icon,
 	dragging : null,
 	start : null,
 	end : null,
 	cut_line_mesh : null,
 	cut_plane_mesh : null,
-
+    description: "drag across a brush to cut it into two separate brushes.",
 
     on_start(e) {
         const hit = raycast(e, core.brush_group.children, false);

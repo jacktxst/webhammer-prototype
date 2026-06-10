@@ -1,0 +1,8 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <!-- camera body -->
+  <rect x="3" y="9" width="12" height="10"
+        stroke="white" stroke-width="1.5" fill="none"/>
+  <!-- lens trapezoid widening to the right -->
+  <path d="M15 11 L21 7 L21 21 L15 17 Z"
+        stroke="white" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+</svg>

@@ -178,12 +178,16 @@ export default {
     align-content: center;
     background: #000;
     border: 1px solid #aaa;
-    padding: 4px 4px;
+    padding: 1px 1px;
     display: flex;
     justify-content: space-between;
     cursor: grab;
     color: white;
     z-index: 101;
+  }
+
+  .panel-header button {
+    padding: 2px 4px;
   }
 
   .panel-content {

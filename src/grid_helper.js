@@ -1,5 +1,10 @@
-// the grid: serves as a visual, and a solid plane that tools
-// are aware of and can interact with. tools snap to the grid, or extrude things off the grid.
+/* grid_helper.js
+
+   the grid: serves as a visual, and a solid plane that tools
+   are aware of and can interact with. tools snap to the grid, 
+   or extrude things off the grid.
+
+*/
 
 import * as THREE from 'three';
 import core from './webhammer.js';
@@ -9,87 +14,132 @@ const Y = 1;
 const Z = 2;
 
 export default {
-    dir: 1, // what is this?
-    object: new THREE.GridHelper(64,16,0xFFFFFFFF, 0x44444444),
-    hitplane: (()=>{
+
+    _divisions: 16,
+    _axis: Y,
+    _default_axis: Y,
+    _default_position: new THREE.Vector3(),
+    _default_divisions: 16, // unused field
+    _cell_size: 64/16,
+    _polarity: 1,
+
+    _grid_mesh: new THREE.GridHelper(64,16,0xFFFFFFFF, 0x44444444),
+
+    _hitplane_mesh: (()=>{
         let mesh = new THREE.Mesh(
             new THREE.PlaneGeometry(1024,1024),
             new THREE.MeshNormalMaterial());
         mesh.material.transparent = true;
-        mesh.material.opacity = 0.2;
+        mesh.material.opacity = 0.1;
         mesh.visible = true;
         return mesh;})(),
-    divisions: 16,
-    axis: Y,
-    default_axis: Y,
-    default_div: 16,
-    cell_size: 64/16,
-    set_position(pos) {
-        this.hitplane.position.copy(pos);
-        this.object.position.copy(pos);
+
+
+    set_position(position) {
+        this._hitplane_mesh.position.copy(position);
+        this._grid_mesh.position.copy(position);
     },
-    set_default(axis) {
-        this.default_axis = axis;
-        this.default_plane();
-    },
-    default_plane() {
-        this.setAxis(this.default_axis);
-    },
-    setAxis(axis) {
+
+
+    /* axis in [0, 1, 2] */
+    set_axis(axis) {
+
+        /* the grid helper and plane have different initial rotations, 
+        so they need to be rotated differently to match */
         const vecs = [
             new THREE.Euler(0,0,Math.PI/2),
             new THREE.Euler(0,0,0),
             new THREE.Euler(Math.PI/2,0,0)
         ];
-        this.object.rotation.copy(vecs[axis]);
-        this.axis = axis;
-        const r = [
-            [0,  Math.PI / 2, 0],   // X (YZ plane)
-            [-Math.PI / 2, 0, 0],   // Y (XZ plane)
-            [0, 0, 0]               // Z (XY plane)
+        this._grid_mesh.rotation.copy(vecs[axis]);
+        
+        const vecs2 = [
+            new THREE.Euler(0,  Math.PI / 2, 0),
+            new THREE.Euler(-Math.PI / 2, 0, 0),
+            new THREE.Euler(0, 0, 0)
         ];
-        const arr = r[this.axis];
-        this.hitplane.rotation.set(arr[X], arr[Y], arr[Z]);
-        this.setDir()
+        this._hitplane_mesh.rotation.copy(vecs2[axis]);
+
+        this._axis = axis;
+        this.set_polarity()
     },
-    setDir() {
-        this.dir = 1;
+
+
+
+    /* sets the polarity of the grid depending on whether the player is in front or behind */
+    set_polarity() {
+        this._polarity = 1;
         const planeNormal = new THREE.Vector3(0, 0, 1)
-            .applyQuaternion(this.hitplane.quaternion)
+            .applyQuaternion(this._hitplane_mesh.quaternion)
             .normalize();
         const planeToCam = new THREE.Vector3()
-            .subVectors(core.camera.position, this.hitplane.position);
+            .subVectors(core.camera.position, this._hitplane_mesh.position);
         if (planeNormal.dot(planeToCam) < 0) {
-            this.dir = -1;
-            this.hitplane.rotateY(Math.PI);
+            this._polarity = -1;
+            this._hitplane_mesh.rotateY(Math.PI);
         }
     },
+
+
+
+    set_default_axis(axis) {
+        this._default_axis = axis;
+        this.set_to_default();
+    },
+
+
+
+    set_default_position(position) {
+        this._default_position = position
+    },
+
+
+
+    set_to_default() {
+        this.set_axis(this._default_axis);
+        this.set_position(this._default_position)
+    },
+
+
+
     grow_cells() {
-        this.set_subdivisions(this.divisions/2);
+        this.set_subdivisions(this._divisions/2);
     },
+
+
+
     shrink_cells() {
-        this.set_subdivisions(this.divisions*2);
+        this.set_subdivisions(this._divisions*2);
     },
+
+
+
     snap_to_grid(point) {
-        const cell_size = this.cell_size;
+        const cell_size = this._cell_size;
         return new THREE.Vector3(
             Math.round(point.x / (cell_size)) * (cell_size),
             Math.round(point.y / (cell_size)) * (cell_size),
             Math.round(point.z / (cell_size)) * (cell_size)
         )
     },
+
+
+
     set_subdivisions(n) {
-        this.divisions = n;
-        this.cell_size = 64 / n;
-        core.scene.remove(this.object);
-        this.object.dispose();
-        this.object = new THREE.GridHelper(64,n,0xFFFFFFFF, 0x44444444);
-        this.setAxis(this.axis);
-        core.scene.add(this.object);
+        this._divisions = n;
+        this._cell_size = 64 / n;
+        core.scene.remove(this._grid_mesh);
+        this._grid_mesh.dispose();
+        this._grid_mesh = new THREE.GridHelper(64,n,0xFFFFFFFF, 0x44444444);
+        this.set_axis(this._axis);
+        core.scene.add(this._grid_mesh);
     },
+
+
+
     align_to_camera() {
         let distance = new THREE.Vector3()
-        distance.subVectors( this.object.position, core.camera.position )
+        distance.subVectors( this._grid_mesh.position, core.camera.position )
         distance.x = Math.abs(distance.x)
         distance.y = Math.abs(distance.y)
         distance.z = Math.abs(distance.z)
@@ -106,8 +156,8 @@ export default {
                 closest_axis = axis
             }
         }
-        this.setAxis(closest_axis)
-        this.setDir()
+        this.set_axis(closest_axis)
+        this.set_polarity()
 
     }
 }

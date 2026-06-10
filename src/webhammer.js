@@ -27,15 +27,19 @@ some of these bugs might not exist anymore. need to check
 
 BUGS
 
+    you can rotate upside down
+    
     grid orientation issues
     grid does not always reorient to default when it should
 
+    can create brushes with no material and materials with no texture
+
     block tool not always on the correct side of the grid
-    orbit camera doesnt exist 
-    brush select and resize tool can make a brush go bye - fixed i think?
 
     brush editor messed up
     vue proxy issues
+
+    cube selection bricks it
 
 CODE ISSUES
     horrible mixture of caps schemes
@@ -49,19 +53,27 @@ what's majorly missing?
 
 WHAT DO I DO NEXT?
 
-    
-
     give the ui some love
-
-        - selected brush should show the brush highlighted and the brush outline
-        - selection box outline should be visible
+    
+        - resize handles should be transluscent white things with white outlines
+        - smaller window title bars
         - test on mobile
-
+        - looking around first person mode in mobile
+        - new project button
+        - numeric entry on mobile
+        - copy paste
+        - selection box outline should be visible
 
     making brushes off of other brushes
 
 ideas for the FUTURE
 
+- texture / material packs
+- uv tool
+- face select mode
+- copy paste / duplicate
+- multi select / multi transform
+- brush grouping / joining / hierarchy / csg
 - tool settings menu
 - saving layouts
 - edit action before commit, enter precise parameters
@@ -69,8 +81,6 @@ ideas for the FUTURE
 - translate brush
 - edit history - redo / undo
 - multiple views (optional)
-
-
 - in game editing
 - decals
 - skybox
@@ -79,16 +89,7 @@ ideas for the FUTURE
 
 import * as THREE from 'three';
 
-import create_block_tool from './editor_tools/create_block.js';
-import cuboid_selection_tool from './editor_tools/cuboid_selection.js';
-import destroy_brush_tool from './editor_tools/destroy_brush.js';
-import orbit_camera_tool from './editor_tools/orbit_camera.js';
-import select_brush_tool from './editor_tools/select_brush.js';
-import paint_face_tool from './editor_tools/paint_face.js';
-import paint_block_tool from './editor_tools/paint_block.js';
-import knife_tool from './editor_tools/knife.js';
-
-
+import tools from './editor_tools/all_tools.js'
 
 import grid  from './grid_helper.js'
 import input from './input.js'
@@ -105,14 +106,24 @@ const Z = 2;
 
 export default {
 
+    new_level() {
 
+        this.init()
+
+    },
 
     init(canvas) {
+
+        this.tools = tools
+        this.grid = grid
+        this.input = input
+
         this.textures = [],
         this.materials = [],
 
         this.current_material = 0
         this.pointer_locked = false
+        this.tool = null
 
         this.velocity = [0,0,0]
         this.input_vec = [0,0]
@@ -120,19 +131,9 @@ export default {
         this.wish_vec = [0,0]
         this.fly_speed = 4
 
-        this.tool = null
-        this.tools = { 
-            create_block: create_block_tool,
-            cuboid_selection: cuboid_selection_tool,
-            destroy_brush: destroy_brush_tool,
-            orbit_camera: orbit_camera_tool,
-            select_brush: select_brush_tool,
-            paint_block: paint_block_tool,
-            paint_face: paint_face_tool,
-            knife: knife_tool
-        },
-        this.grid = grid
-        this.input = input
+        
+        
+
         this.canvas = canvas;
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas});
         this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -141,6 +142,7 @@ export default {
         this.loop = this.loop.bind(this);
         this.on_resize = this.input.on_resize.bind(this);
         this.aspect = this.canvas.clientWidth / this.canvas.clientHeight;
+        
         this.v_persp = new THREE.PerspectiveCamera();
         this.v_persp.rotation.order = 'YXZ';
         this.frustumSize = 10;
@@ -148,14 +150,18 @@ export default {
         this.v_ortho.rotation.order = 'YXZ';
         this.camera = this.v_persp;
         this.camera.position.set(0, 5, 0);
+        
         this.raycaster = new THREE.Raycaster();
         this.clock = new THREE.Clock();
+        
         this.scene = new THREE.Scene();
-        this.scene.add(this.brush_group = new THREE.Object3D());
-        this.scene.add(this.grid.object);
-        this.scene.add(this.grid.hitplane);
+        this.brush_group = new THREE.Object3D()
 
-        this.grid.default_plane();
+        this.scene.add(this.brush_group);
+        this.scene.add(this.grid._grid_mesh);
+        this.scene.add(this.grid._hitplane_mesh);
+
+        this.grid.set_to_default();
         this.input.init();
         this.input.on_resize();
         this.renderer.setAnimationLoop(this.loop);
@@ -172,18 +178,17 @@ export default {
 
 
     loop() {
-        const dt = this.clock.getDelta();
+        const dt = this.clock.getDelta(); // three js deprecated
 
         this.camera.position.x += this.wish_vec[X] * this.fly_speed * dt;
         this.camera.position.y += this.velocity[Y] * this.fly_speed * dt;
         this.camera.position.z += this.wish_vec[Y] * this.fly_speed * dt;
-
         this.camera.rotation.y += this.look_vel.y * 1.5 * dt;
         this.camera.rotation.x += this.look_vel.x * 1.5 * dt;
-        this.look_vel.y = clamp(this.look_vel.y, -1, 1)
-        this.look_vel.x = clamp(this.look_vel.x, -1, 1) 
-
+        
         this.renderer.render(this.scene, this.camera);
+
+        this.grid.set_polarity()
     },
 
 
@@ -307,20 +312,25 @@ export default {
 
 
 
-    /* create and register a texture with the given image */
-    create_texture(bitmap) {
+    /* create and register a texture with the given image; name defaults to
+       "Texture N" when the caller doesn't supply one (used by load_level) */
+    create_texture(bitmap, name) {
         const texture = new THREE.Texture(bitmap);
         texture.anisotropy = 4;
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.needsUpdate = true;
-        this.textures.push({ texture: texture, bitmap : bitmap  });
+        this.textures.push({
+            texture: texture,
+            bitmap: bitmap,
+            name: name ?? ('Texture ' + this.textures.length)
+        });
     },
 
 
 
-    /* prompt the user to open an image file */
+    /* prompt the user to open an image file; texture name = filename sans extension */
     import_texture() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -329,7 +339,40 @@ export default {
             const file = input.files[0];
             if (!file) return;
             const bitmap = await createImageBitmap(file);
-            this.create_texture(bitmap)
+            const name = file.name.replace(/\.[^/.]+$/, '');
+            this.create_texture(bitmap, name);
+        };
+        input.click();
+    },
+
+    /* prompt the user to import an equirectangular image and use it as the
+       in-editor scene background. this is a *preview* skybox only — it lives
+       on core.preview_skybox and is NOT pushed into this.textures, so it
+       doesn't leak into save_level() or the texture browser. the actual
+       runtime skybox for the level will be set through a separate path. */
+    set_preview_skybox() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+            // Three's Texture.flipY is IGNORED when the source is an
+            // ImageBitmap — orientation has to be baked in at bitmap creation.
+            // 'flipY' here pre-flips the rows so the equirect shader samples
+            // image-top (sky) when looking up.
+            const bitmap = await createImageBitmap(file, { imageOrientation: 'flipY' });
+
+            const texture = new THREE.Texture(bitmap);
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.needsUpdate = true;
+
+            // free the previous preview skybox if any — it's not referenced
+            // anywhere else so this is safe
+            if (this.preview_skybox) this.preview_skybox.dispose();
+            this.preview_skybox = texture;
+            this.scene.background = texture;
         };
         input.click();
     }
