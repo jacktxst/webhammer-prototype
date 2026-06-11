@@ -125,6 +125,8 @@ export default {
 
 			const hit = raycast(e, [core.grid._hitplane_mesh], false);
 
+			if (!hit?.point) return;
+
 			hit.point = core.grid.snap_to_grid(hit.point) // .clone();
 	        hit.point.sub(this.dragged_handle.position); // difference
 	        hit.point.multiply(this.dragged_handle.handle_magnitude); // axis restricted
@@ -145,10 +147,18 @@ export default {
 	        this.aabb.position.add(hit.point);
 			this.handle_group.update_handle_positions( this.aabb.position, this.aabb.size )
 
+			const half_size = this.aabb.size.clone().multiplyScalar(0.5);
+			const anchor = this.aabb.position.clone().sub(half_size.multiply(this.dragged_handle.handle_magnitude));
+			const translation_amount = anchor.multiply(new THREE.Vector3(1, 1, 1).sub(scale_factor));
+
 			for (let object of core.tools.multiselect.selected_brushes) {
-				let translation_amount = hit.point
 				object.brushRef.scale(scale_factor)
+				object.highlight_mesh.highlight_mesh.scale.multiply(scale_factor)
+				object.highlight_mesh.edges_mesh.scale.multiply(scale_factor)
+
 				object.brushRef.translate(translation_amount)
+				object.highlight_mesh.highlight_mesh.position.add(hit.point)
+				object.highlight_mesh.edges_mesh.position.add(hit.point)
 			}
 		}
 
