@@ -8,6 +8,7 @@ import paint_block_tool from './paint_block.js';
 import knife_tool from './knife.js';
 import multiselect from './multiselect.js'
 import transform from './transform.js'
+import stamp from './stamp.js'
 
 
 export default { 
@@ -20,6 +21,7 @@ export default {
     paint_face: paint_face_tool,
     knife: knife_tool,
     multiselect,
-    transform
+    transform,
+    stamp
     // pick material
 }

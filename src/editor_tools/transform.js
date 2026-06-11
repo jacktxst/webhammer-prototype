@@ -155,12 +155,21 @@ export default {
 
 			for (let object of core.tools.multiselect.selected_brushes) {
 				object.brushRef.scale(scale_factor)
-				object.highlight_mesh.highlight_mesh.scale.multiply(scale_factor)
-				object.highlight_mesh.edges_mesh.scale.multiply(scale_factor)
-
 				object.brushRef.translate(translation_amount)
-				object.highlight_mesh.highlight_mesh.position.multiply(scale_factor).add(translation_amount)
-				object.highlight_mesh.edges_mesh.position.multiply(scale_factor).add(translation_amount)
+
+				// re-point the highlight at the brush's freshly-regenerated geometry
+				// so they share bit-identical vertex data — the Object3D scale path on
+				// the original vertices diverges from the brush's plane-clipping path
+				// under non-uniform scale, which makes the brush surface z-fight with
+				// the overlay
+				const hl = object.highlight_mesh;
+				hl.highlight_mesh.geometry = object.brushRef.mesh.geometry;
+				hl.highlight_mesh.position.set(0, 0, 0);
+				hl.highlight_mesh.scale.set(1, 1, 1);
+				hl.edges_mesh.geometry.dispose();
+				hl.edges_mesh.geometry = new THREE.EdgesGeometry(object.brushRef.mesh.geometry);
+				hl.edges_mesh.position.set(0, 0, 0);
+				hl.edges_mesh.scale.set(1, 1, 1);
 			}
 		}
 
