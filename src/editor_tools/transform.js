@@ -142,6 +142,8 @@ export default {
 	        let scale_factor = this.aabb.size.clone()
 	        scale_factor.divide(old);
 
+
+
 	        hit.point.multiplyScalar(0.5);
 	        hit.point.multiply(this.dragged_handle.handle_magnitude);
 	        this.aabb.position.add(hit.point);
@@ -157,8 +159,8 @@ export default {
 				object.highlight_mesh.edges_mesh.scale.multiply(scale_factor)
 
 				object.brushRef.translate(translation_amount)
-				object.highlight_mesh.highlight_mesh.position.add(hit.point)
-				object.highlight_mesh.edges_mesh.position.add(hit.point)
+				object.highlight_mesh.highlight_mesh.position.multiply(scale_factor).add(translation_amount)
+				object.highlight_mesh.edges_mesh.position.multiply(scale_factor).add(translation_amount)
 			}
 		}
 
