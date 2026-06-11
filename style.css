@@ -20,6 +20,7 @@ html, body {
 
 #jump, #crouch, #joystick {
     text-align: center;
+    align-content: center;
     user-select: none;           /* prevents text selection */
     -webkit-user-select: none;   /* for Safari */
     -webkit-touch-callout: none; /* disables long-press menu on iOS */
@@ -72,12 +73,13 @@ button:active {
     transform: translate(-50%, -50%);
     z-index:12;
 }
+
 #jump {
     position: fixed;
-    bottom: 50px;
+    bottom: 150px;
     right: 50px;
-    width: 100px;
-    height: 100px;
+    width: 75px;
+    height: 75px;
     border: 2px solid white;
     color: white;
     background: rgba(0, 0, 0, 1.0);
@@ -87,11 +89,11 @@ button:active {
 }
 #crouch {
     position: fixed;
-    bottom: 150px;
+    bottom: 50px;
     right: 50px;
-    width: 100px;
+    width: 75px;
     outline: 2px solid white;
-    height: 100px;
+    height: 75px;
     color: white;
     background: rgba(0, 0, 0, 1.0);
     border-radius: 50%;

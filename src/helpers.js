@@ -9,6 +9,8 @@ const X = 0;
 const Y = 1;
 const Z = 2;
 
+
+
 export function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
 }

@@ -90,7 +90,7 @@ ideas for the FUTURE
 import * as THREE from 'three';
 
 import tools from './editor_tools/all_tools.js'
-
+import Body from './player_body.js'
 import grid  from './grid_helper.js'
 import input from './input.js'
 
@@ -132,7 +132,8 @@ export default {
         this.fly_speed = 4
 
         
-        
+        this.noclip = true
+        this.body = new Body({ size:new THREE.Vector3(1,2,1), position: new THREE.Vector3(0, 5, 0) })
 
         this.canvas = canvas;
         this.renderer = new THREE.WebGLRenderer({canvas: this.canvas});
@@ -157,7 +158,13 @@ export default {
         this.scene = new THREE.Scene();
         this.brush_group = new THREE.Object3D()
 
+        this.ambient_light = new THREE.AmbientLight(0xffffff, 0.5);
+        this.directional_light = new THREE.DirectionalLight(0xffffff, 1.0);
+        this.directional_light.position.set(1, 2, 1);
+
         this.scene.add(this.brush_group);
+        this.scene.add(this.ambient_light);
+        this.scene.add(this.directional_light);
         this.scene.add(this.grid._grid_mesh);
         this.scene.add(this.grid._hitplane_mesh);
 
@@ -180,14 +187,27 @@ export default {
     loop() {
         const dt = this.clock.getDelta(); // three js deprecated
 
-        this.camera.position.x += this.wish_vec[X] * this.fly_speed * dt;
-        this.camera.position.y += this.velocity[Y] * this.fly_speed * dt;
-        this.camera.position.z += this.wish_vec[Y] * this.fly_speed * dt;
-        this.camera.rotation.y += this.look_vel.y * 1.5 * dt;
-        this.camera.rotation.x += this.look_vel.x * 1.5 * dt;
-        
-        this.renderer.render(this.scene, this.camera);
+        if (this.tool == "orbit_camera") {
+            this.body.position.copy(this.camera.position)
+        } else {
 
+            let move_vec = new THREE.Vector3( this.wish_vec[X] , this.velocity[Y] , this.wish_vec[Y] )
+            move_vec.multiplyScalar( this.fly_speed * dt )
+
+            if (this.noclip) {
+                this.body.position.add(move_vec)
+            } else {
+                this.body.do_world_collision(move_vec, this.brush_group.children)
+            }
+
+            this.camera.position.copy(this.body.position)
+
+            this.camera.rotation.y += this.look_vel.y * 1.5 * dt;
+            this.camera.rotation.x += this.look_vel.x * 1.5 * dt;
+            
+        }
+
+        this.renderer.render(this.scene, this.camera);
         this.grid.set_polarity()
     },
 
@@ -244,7 +264,7 @@ export default {
                 const matsData = JSON.parse(matText);
 
                 for (let m of matsData) {
-                    const mat = new THREE.MeshBasicMaterial({});
+                    const mat = new THREE.MeshLambertMaterial({});
                     mat.kx_texture = m.kx_texture ?? 0;
 
                     if (this.textures[mat.kx_texture]) {
@@ -317,6 +337,9 @@ export default {
     create_texture(bitmap, name) {
         const texture = new THREE.Texture(bitmap);
         texture.anisotropy = 4;
+        texture.generateMipmaps = false; 
+        texture.magFilter = THREE.NearestFilter;
+        texture.minFilter = THREE.NearestFilter;
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.colorSpace = THREE.SRGBColorSpace;

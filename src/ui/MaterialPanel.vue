@@ -22,7 +22,7 @@ export default {
       }
     },
     add_material() {
-      const mat = new THREE.MeshBasicMaterial();
+      const mat = new THREE.MeshLambertMaterial();
       mat.kx_texture = 0;
       if (this.core.textures[0]) mat.map = this.core.textures[0].texture;
       // THREE.Material already has a .name field — give it a sensible default
@@ -41,7 +41,7 @@ export default {
         const entry = this.core.textures[i];
         const name = entry.name ?? ('Material ' + this.core.materials.length);
         if (existing.has(name)) continue;
-        const mat = new THREE.MeshBasicMaterial();
+        const mat = new THREE.MeshLambertMaterial();
         mat.kx_texture = i;
         mat.map = entry.texture;
         mat.name = name;

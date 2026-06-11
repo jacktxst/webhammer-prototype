@@ -20,6 +20,7 @@ export default {
         select_multiple: { type: 'toggle', value: false }
     },
 
+    
     icon,
     selected_brush: null,
     dragged_handle: null,
@@ -27,9 +28,7 @@ export default {
     // translate_anchor is the last snapped point on the drag plane.
     translating: false,
     translate_anchor: null,
-    // light-blue translucent overlay + white wireframe of the selected brush.
-    // these reference the brush's CURRENT geometry; whenever the brush is
-    // regenerated (scale/translate -> _generateMesh) we rebuild them.
+
     highlight_mesh: null,
     highlight_edges: null,
 

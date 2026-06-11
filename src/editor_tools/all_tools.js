@@ -16,4 +16,5 @@ export default {
     paint_block: paint_block_tool,
     paint_face: paint_face_tool,
     knife: knife_tool
+    // pick material
 }
