@@ -317,12 +317,14 @@ export class PlaneBrush {
 
         if (this.mesh) {
             this.mesh.geometry.dispose();
-            core.brush_group.remove(this.mesh)
+            this.mesh.geometry = geom 
+            this.mesh.material = materials
+        } else {
+            this.mesh = new THREE.Mesh(geom , materials )
+            this.mesh.brushRef = this
+            core.brush_group.add(this.mesh);
         }
-        let mesh = new THREE.Mesh(geom , materials )
-        mesh.brushRef = this
-        this.mesh = mesh
-        core.brush_group.add(this.mesh);
+        
 
     }
 

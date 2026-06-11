@@ -28,6 +28,8 @@ some of these bugs might not exist anymore. need to check
 BUGS
 
     you can rotate upside down
+
+    you can crash by subdividing the grid too much
     
     grid orientation issues
     grid does not always reorient to default when it should

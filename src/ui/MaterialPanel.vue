@@ -116,6 +116,10 @@ export default {
             <span>tex {{ core.materials[core.current_material].kx_texture ?? 0 }}</span>
             <button @click="bump_texture(+1)">+</button>
           </div>
+          <label class="visible-row">
+            <input type="checkbox" v-model="core.materials[core.current_material].visible" />
+            visible
+          </label>
           <button class="delete-btn" @click="remove_current">delete</button>
         </template>
         <div v-else class="panel-empty">no material</div>
@@ -138,6 +142,17 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.visible-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: white;
+}
+.visible-row input {
+  margin: 0;
 }
 
 .add-btn {

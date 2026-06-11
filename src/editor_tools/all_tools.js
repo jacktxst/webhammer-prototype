@@ -6,6 +6,9 @@ import select_brush_tool from './select_brush.js';
 import paint_face_tool from './paint_face.js';
 import paint_block_tool from './paint_block.js';
 import knife_tool from './knife.js';
+import multiselect from './multiselect.js'
+import transform from './transform.js'
+
 
 export default { 
     create_block: create_block_tool,
@@ -15,6 +18,8 @@ export default {
     select_brush: select_brush_tool,
     paint_block: paint_block_tool,
     paint_face: paint_face_tool,
-    knife: knife_tool
+    knife: knife_tool,
+    multiselect,
+    transform
     // pick material
 }

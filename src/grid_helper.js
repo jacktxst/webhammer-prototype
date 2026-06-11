@@ -34,10 +34,14 @@ export default {
         mesh.visible = true;
         return mesh;})(),
 
+    get_position(){
+        return this._grid_mesh.position;
+    },
 
     set_position(position) {
         this._hitplane_mesh.position.copy(position);
         this._grid_mesh.position.copy(position);
+        this._hitplane_mesh.updateMatrixWorld()
     },
 
 
@@ -59,6 +63,7 @@ export default {
             new THREE.Euler(0, 0, 0)
         ];
         this._hitplane_mesh.rotation.copy(vecs2[axis]);
+        this._hitplane_mesh.updateMatrixWorld()
 
         this._axis = axis;
         this.set_polarity()
