@@ -50,6 +50,10 @@ export default {
 
 	handle_group: new ResizeHandleGroup(),
 
+	params: {
+		uv_lock: {type:"toggle", value:false}
+	},
+
 	init() {
 		core.scene.add(this.handle_group.object)
 		this.aabb = core.tools.multiselect.get_selection_aabb()

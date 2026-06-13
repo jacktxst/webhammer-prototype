@@ -166,7 +166,7 @@ export default {
     width: 200px;
     background: #000;
     border: 1px solid #aaa;
-    border-radius: 4px;
+    border-radius: 0px;
     box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
     user-select: none;
     z-index: 100;
@@ -178,7 +178,8 @@ export default {
     align-content: center;
     background: #000;
     border: 1px solid #aaa;
-    padding: 1px 1px;
+    margin: 2px;
+    padding: 2px 2px;
     display: flex;
     justify-content: space-between;
     cursor: grab;
@@ -191,7 +192,7 @@ export default {
   }
 
   .panel-content {
-    padding: 8px;
+    padding: 1px;
     z-index: 101;
     background-color: black;
     color: white;
