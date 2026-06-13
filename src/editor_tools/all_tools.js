@@ -9,11 +9,11 @@ import knife_tool from './knife.js';
 import multiselect from './multiselect.js'
 import transform from './transform.js'
 import stamp from './stamp.js'
-
+import drag_select from './drag_select.js'
 
 export default { 
     create_block: create_block_tool,
-    cuboid_selection: cuboid_selection_tool,
+    drag_select,
     destroy_brush: destroy_brush_tool,
     orbit_camera: orbit_camera_tool,
     select_brush: select_brush_tool,
