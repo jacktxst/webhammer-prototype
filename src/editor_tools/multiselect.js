@@ -53,7 +53,9 @@ class ResizeHandleGroup {
 export default {
 
 	selected_brushes: [],
-	mode : "multi_toggle",
+	params : {
+		action: {type: "radiobuttons", value: "multi_toggle", options: ["multi_toggle","single","multi_add","multi_remove"]}
+	},
 
 	get_selection_aabb() {
 
@@ -80,7 +82,7 @@ export default {
 
 		const hit = raycast(e, core.brush_group.children, false);
 
-		switch (this.mode) {
+		switch (this.params.action.value) {
 
 			case "single":
 				this.deselect_all()

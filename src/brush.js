@@ -47,7 +47,7 @@ class BrushPlane {
             normal: new THREE.Vector3(),
             distance: 0,
             material_id: 0,
-            uv_scale: new THREE.Vector2(),
+            uv_scale: new THREE.Vector2(1, 1),
             uv_offset: new THREE.Vector2(),
             uv_rotation: 0
         }, options);
@@ -130,12 +130,16 @@ export class PlaneBrush {
         let object = JSON.parse(str)
         for (let plane_data of object.planes) {
 
+            // legacy saves may have uv_scale = (0,0) from the old default; treat as (1,1)
+            const sx = plane_data.uv_scale.x || 1;
+            const sy = plane_data.uv_scale.y || 1;
+
             this._planes.push(
                 new BrushPlane({
                     normal: new THREE.Vector3(plane_data.normal.x, plane_data.normal.y, plane_data.normal.z),
                     distance: plane_data.distance,
                     material_id: plane_data.material_id,
-                    uv_scale: new THREE.Vector2(plane_data.uv_scale.x, plane_data.uv_scale.y),
+                    uv_scale: new THREE.Vector2(sx, sy),
                     uv_offset: new THREE.Vector2(plane_data.uv_offset.x, plane_data.uv_offset.y),
                     uv_rotation: plane_data.uv_rotation
                 })
@@ -181,7 +185,23 @@ export class PlaneBrush {
     // -------------------------
     // Transformations
     // -------------------------
-    scale(vec) {
+    scale(vec, uv_lock = false) {
+        // when uv_lock is on, snapshot per-face state so we can re-anchor the texture
+        // after the planes (and therefore their basis vectors) change
+        let old_state = null;
+        if (uv_lock) {
+            old_state = this._planes.map(p => {
+                const u = new THREE.Vector3(), v = new THREE.Vector3();
+                this._buildBasis(p.normal, u, v);
+                return {
+                    u, v,
+                    center: p.normal.clone().multiplyScalar(p.distance),
+                    uv_scale: p.uv_scale.clone(),
+                    uv_offset: p.uv_offset.clone()
+                };
+            });
+        }
+
         for (const p of this._planes) {
             // transform a plane { n, d } where n.P = d under axis scaling S = diag(vec):
             //   new equation is (S^-T n) . P' = d
@@ -193,11 +213,64 @@ export class PlaneBrush {
             p.normal.set(nx / L, ny / L, nz / L);
             p.distance = p.distance / L;
         }
+
+        if (uv_lock) {
+            for (let i = 0; i < this._planes.length; i++) {
+                const p = this._planes[i];
+                const old = old_state[i];
+                const new_u = new THREE.Vector3(), new_v = new THREE.Vector3();
+                this._buildBasis(p.normal, new_u, new_v);
+
+                // how much the face stretches along its U/V axes:
+                // a unit step along the old basis becomes (old_basis * vec) in world space after scale;
+                // project that onto the new basis to get the signed stretch factor.
+                // exact for axis-aligned scaling of axis-aligned faces; approximate otherwise.
+                const u_after = new THREE.Vector3(old.u.x * vec.x, old.u.y * vec.y, old.u.z * vec.z);
+                const v_after = new THREE.Vector3(old.v.x * vec.x, old.v.y * vec.y, old.v.z * vec.z);
+                const u_factor = u_after.dot(new_u);
+                const v_factor = v_after.dot(new_v);
+
+                p.uv_scale.x = old.uv_scale.x * u_factor;
+                p.uv_scale.y = old.uv_scale.y * v_factor;
+
+                // re-anchor uv_offset so the plane center samples the same texel before/after
+                const cos_r = Math.cos(p.uv_rotation);
+                const sin_r = Math.sin(p.uv_rotation);
+                const new_center = p.normal.clone().multiplyScalar(p.distance);
+
+                const old_uw = old.center.dot(old.u);
+                const old_vw = old.center.dot(old.v);
+                const old_ur = old_uw * cos_r - old_vw * sin_r;
+                const old_vr = old_uw * sin_r + old_vw * cos_r;
+                const old_final_u = old_ur / old.uv_scale.x + old.uv_offset.x;
+                const old_final_v = old_vr / old.uv_scale.y + old.uv_offset.y;
+
+                const new_uw = new_center.dot(new_u);
+                const new_vw = new_center.dot(new_v);
+                const new_ur = new_uw * cos_r - new_vw * sin_r;
+                const new_vr = new_uw * sin_r + new_vw * cos_r;
+                p.uv_offset.x = old_final_u - new_ur / p.uv_scale.x;
+                p.uv_offset.y = old_final_v - new_vr / p.uv_scale.y;
+            }
+        }
+
         this._generateMesh();
     }
 
-    translate(vec) {
+    translate(vec, uv_lock = false) {
         for (const p of this._planes) {
+            if (uv_lock) {
+                // translation leaves normals (and basis) unchanged, so we just need
+                // to subtract the world-UV shift at any vertex from uv_offset
+                const u = new THREE.Vector3(), v = new THREE.Vector3();
+                this._buildBasis(p.normal, u, v);
+                const du = vec.dot(u);
+                const dv = vec.dot(v);
+                const cos_r = Math.cos(p.uv_rotation);
+                const sin_r = Math.sin(p.uv_rotation);
+                p.uv_offset.x -= (du * cos_r - dv * sin_r) / p.uv_scale.x;
+                p.uv_offset.y -= (du * sin_r + dv * cos_r) / p.uv_scale.y;
+            }
             p.distance += p.normal.dot(vec);
         }
         this._generateMesh();
@@ -267,19 +340,27 @@ export class PlaneBrush {
 
             materials.push( core.materials[ this._planes[i].material_id ] )
 
-            const normal = this._planes[i].normal;
+            const plane = this._planes[i];
+            const normal = plane.normal;
 
             const basisU = new THREE.Vector3();
             const basisV = new THREE.Vector3();
             this._buildBasis(normal, basisU, basisV);
 
+            const cos_r = Math.cos(plane.uv_rotation);
+            const sin_r = Math.sin(plane.uv_rotation);
+
             for (const v of face) {
                 positions.push(v.x, v.y, v.z);
                 normals.push(normal.x, normal.y, normal.z);
 
+                const uw = v.dot(basisU);
+                const vw = v.dot(basisV);
+                const ur = uw * cos_r - vw * sin_r;
+                const vr = uw * sin_r + vw * cos_r;
                 uvs.push(
-                    v.dot(basisU),
-                    v.dot(basisV)
+                    ur / plane.uv_scale.x + plane.uv_offset.x,
+                    vr / plane.uv_scale.y + plane.uv_offset.y
                 );
             }
 

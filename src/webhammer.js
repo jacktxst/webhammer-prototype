@@ -41,7 +41,8 @@ BUGS
     brush editor messed up
     vue proxy issues
 
-    cube selection bricks it
+    you hit resize handle before translate plane, so you can hit the resize handles THROUGH the brush ur tryna click on
+
 
 CODE ISSUES
     horrible mixture of caps schemes

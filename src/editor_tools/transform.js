@@ -49,6 +49,7 @@ class ResizeHandleGroup {
 export default {
 
 	handle_group: new ResizeHandleGroup(),
+	description: "scale and translate all currently selected brushes. drag on a brush to translate, drag on one of the selection's handles to resize.",
 
 	params: {
 		uv_lock: {type:"toggle", value:false}
@@ -112,7 +113,7 @@ export default {
 				this.aabb.position.add(translation)
 				core.grid.set_position(hit.point)
 				for (let object of core.tools.multiselect.selected_brushes) {
-					object.brushRef.translate(translation)
+					object.brushRef.translate(translation, this.params.uv_lock.value)
 					object.highlight_mesh.highlight_mesh.position.add(translation)
 					object.highlight_mesh.edges_mesh.position.add(translation)
 				}
@@ -158,8 +159,8 @@ export default {
 			const translation_amount = anchor.multiply(new THREE.Vector3(1, 1, 1).sub(scale_factor));
 
 			for (let object of core.tools.multiselect.selected_brushes) {
-				object.brushRef.scale(scale_factor)
-				object.brushRef.translate(translation_amount)
+				object.brushRef.scale(scale_factor, this.params.uv_lock.value)
+				object.brushRef.translate(translation_amount, this.params.uv_lock.value)
 
 				// re-point the highlight at the brush's freshly-regenerated geometry
 				// so they share bit-identical vertex data — the Object3D scale path on
